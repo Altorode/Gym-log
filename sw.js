@@ -1,5 +1,5 @@
 // Bump CACHE_VERSION whenever you upload a new version of the app files.
-const CACHE = 'gymlog-v2';
+const CACHE = 'gymlog-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

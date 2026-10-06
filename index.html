@@ -11,22 +11,22 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-:root{--bg:#f4f5f9;--card:#fff;--text:#14171f;--muted:#667085;--line:#e3e6ee;--accent:#2563eb;--accent-text:#fff;--accent2:#d97706;--danger:#d92d20;--ok:#12a150;--shadow:0 1px 3px rgba(16,24,40,.08);color-scheme:light dark}
+:root{--fs:1;--bg:#f4f5f9;--card:#fff;--text:#14171f;--muted:#667085;--line:#e3e6ee;--accent:#2563eb;--accent-text:#fff;--accent2:#d97706;--danger:#d92d20;--ok:#12a150;--shadow:0 1px 3px rgba(16,24,40,.08);color-scheme:light dark}
 @media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#1a1d25;--text:#eef0f5;--muted:#9aa3b5;--line:#2a2f3b;--accent:#6ea0ff;--accent-text:#0b1020;--accent2:#fbbf24;--danger:#ff6b61;--ok:#4ade80;--shadow:none}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;min-height:100%}
-body{background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior-y:contain}
+body{background:var(--bg);color:var(--text);font:calc(16px*var(--fs))/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior-y:contain}
 #app{min-height:100vh;display:flex;flex-direction:column}
 header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(env(safe-area-inset-top) + 12px) 16px 8px;display:flex;align-items:center;gap:10px;max-width:640px;width:100%;margin:0 auto}
-header.top h1{font-size:22px;margin:0;line-height:1.2}
+header.top h1{font-size:calc(22px*var(--fs));margin:0;line-height:1.2}
 main{flex:1;padding:4px 16px 110px;max-width:640px;width:100%;margin:0 auto}
 nav.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:6}
-nav.tabs button{flex:1;min-height:64px;border:0;background:none;color:var(--muted);font:inherit;font-size:17px;font-weight:800;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;position:relative}
+nav.tabs button{flex:1;min-height:64px;border:0;background:none;color:var(--muted);font:inherit;font-size:calc(17px*min(var(--fs),1.15));font-weight:800;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;position:relative}
 nav.tabs button.on{color:var(--accent)}
 nav.tabs button.on::before{content:"";position:absolute;top:0;left:20%;right:20%;height:4px;border-radius:0 0 4px 4px;background:var(--accent)}
 nav.tabs button.gear{flex:0 0 68px;font-size:28px;font-weight:400}
 .grow{flex:1;min-width:0}.row{display:flex;align-items:center;gap:8px}.row.wrap{flex-wrap:wrap}.mt{margin-top:12px}.center{text-align:center}
-.muted{color:var(--muted)}.sm{font-size:13px}.ok{color:var(--ok)}
+.muted{color:var(--muted)}.sm{font-size:calc(13px*var(--fs))}.ok{color:var(--ok)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0;box-shadow:var(--shadow)}
 .card.note{border-color:var(--accent2)}
 .card.err{border-color:var(--danger)}
@@ -36,26 +36,26 @@ nav.tabs button.gear{flex:0 0 68px;font-size:28px;font-weight:400}
 .btn.primary{background:var(--accent);color:var(--accent-text);border-color:transparent}
 .btn.danger{color:var(--danger)}
 .btn.block{display:block;width:100%}
-.btn.sm{min-height:44px;padding:0 12px;font-size:14px}
+.btn.sm{min-height:44px;padding:0 12px;font-size:calc(14px*var(--fs))}
 .btn.icon{min-width:48px;padding:0}
-.btn.huge{min-height:68px;font-size:20px}
+.btn.huge{min-height:68px;font-size:calc(20px*var(--fs))}
 .link{background:none;border:0;color:inherit;font:inherit;text-align:left;padding:4px 0;min-height:44px;cursor:pointer}
-label.lbl{display:block;font-size:13px;color:var(--muted);margin:12px 0 4px}
+label.lbl{display:block;font-size:calc(13px*var(--fs));color:var(--muted);margin:12px 0 4px}
 input,select,textarea{font:inherit;width:100%;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:8px 12px}
 textarea{min-height:90px;resize:vertical}
 input[type=checkbox]{width:28px;height:28px;min-height:0;flex:none}
 .seg{display:flex;gap:8px;margin:6px 0}.seg .btn{flex:1}.seg .btn.on{background:var(--accent);color:var(--accent-text);border-color:transparent}
 .chip{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:48px;padding:0 14px;margin:3px 6px 3px 0;border-radius:22px;background:var(--bg);border:1px solid var(--line);color:var(--text);font:inherit;font-weight:700}
-.badge{display:inline-block;font-size:12px;padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.badge{display:inline-block;font-size:calc(12px*var(--fs));padding:2px 8px;border-radius:10px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
 .badge.warn{color:var(--accent2);border-color:var(--accent2)}
-.exname{margin:0 0 4px;font-size:24px}
-.setlbl{font-size:18px;font-weight:700;color:var(--accent)}
-.target{font-size:44px;font-weight:800;margin:6px 0 2px;font-variant-numeric:tabular-nums}
-.lastnote{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--bg);font-size:14px;text-align:left}
+.exname{margin:0 0 4px;font-size:calc(24px*var(--fs))}
+.setlbl{font-size:calc(18px*var(--fs));font-weight:700;color:var(--accent)}
+.target{font-size:calc(44px*var(--fs));font-weight:800;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.lastnote{margin-top:10px;padding:8px 10px;border-radius:10px;background:var(--bg);font-size:calc(14px*var(--fs));text-align:left}
 .stepper{display:flex;gap:10px;align-items:center}
-.stepper .btn{width:76px;height:76px;font-size:36px;padding:0;flex:none}
-.stepper input{height:76px;font-size:40px;font-weight:800;text-align:center}
-.timer{font-size:68px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
+.stepper .btn{width:76px;height:76px;font-size:calc(36px*var(--fs));padding:0;flex:none}
+.stepper input{height:76px;font-size:calc(40px*var(--fs));font-weight:800;text-align:center}
+.timer{font-size:calc(68px*var(--fs));font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
 .bar{height:8px;border-radius:4px;background:var(--bg);overflow:hidden;margin:6px 0 12px}.bar i{display:block;height:100%;background:var(--accent);transition:width .25s linear}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center}
 .overlay[hidden]{display:none}
@@ -66,7 +66,7 @@ input[type=checkbox]{width:28px;height:28px;min-height:0;flex:none}
 .ent{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
 .chart{width:100%;height:auto;display:block}
 .chart .grid{stroke:var(--line);stroke-width:1}
-.chart .ax{font-size:10px;fill:var(--muted)}.chart .ax.a{fill:var(--accent)}.chart .ax.b{fill:var(--accent2)}
+.chart .ax{font-size:calc(10px*var(--fs));fill:var(--muted)}.chart .ax.a{fill:var(--accent)}.chart .ax.b{fill:var(--accent2)}
 .chart .l1{fill:none;stroke:var(--accent);stroke-width:2.5}.chart .l2{fill:none;stroke:var(--accent2);stroke-width:2;stroke-dasharray:5 4}
 .chart .p1{fill:var(--accent)}.chart .p2{fill:var(--accent2)}.chart .sel{fill:none;stroke:var(--text);stroke-width:1.5;stroke-dasharray:3 3}
 .dot{display:inline-block;width:12px;height:12px;border-radius:6px;margin-right:6px;vertical-align:middle}
@@ -97,7 +97,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');cl
 /* ---------- storage ---------- */
 const KEY='gymlog.v1';
 let storageOK=true;
-function blank(){return {v:1,created:Date.now(),exercises:{},workouts:[],sessions:[],lastBackup:null,active:null};}
+function blank(){return {v:1,created:Date.now(),exercises:{},workouts:[],sessions:[],lastBackup:null,active:null,theme:{fs:1,bg:null,text:null,accent:null}};}
 function load(){
   try{
     localStorage.setItem('gymlog.test','1');localStorage.removeItem('gymlog.test');
@@ -111,6 +111,38 @@ function save(){
   catch(e){if(storageOK){storageOK=false;render();}}
 }
 let S=load();
+
+/* ---------- theme (text size + colours) ---------- */
+const HEXRE=/^#[0-9a-f]{6}$/i;
+const THEME_VARS=['--fs','--bg','--card','--text','--muted','--line','--accent','--accent-text'];
+const SIZES=[['Small',.9],['Normal',1],['Large',1.15],['Huge',1.3]];
+const PRESETS=[['System',null],['Light',{bg:'#f4f5f9',text:'#14171f',accent:'#2563eb'}],['Dark',{bg:'#0f1115',text:'#eef0f5',accent:'#6ea0ff'}],['High contrast',{bg:'#000000',text:'#ffffff',accent:'#ffd400'}]];
+const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const rgb2hex=a=>'#'+a.map(v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+const mix=(a,b,t)=>{const x=hex2rgb(a),y=hex2rgb(b);return rgb2hex(x.map((v,i)=>v+(y[i]-v)*t));};
+const lum=h=>{const c=hex2rgb(h).map(v=>{v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);});return .2126*c[0]+.7152*c[1]+.0722*c[2];};
+const contrast=(a,b)=>{const l1=lum(a),l2=lum(b);return (Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05);};
+function th(){if(!S.theme||typeof S.theme!=='object')S.theme={fs:1,bg:null,text:null,accent:null};return S.theme;}
+function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function applyTheme(){
+  const root=document.documentElement,r=root.style,t=th();
+  THEME_VARS.forEach(v=>r.removeProperty(v));r.removeProperty('color-scheme');
+  const fs=+t.fs;if(fs>=.8&&fs<=1.6&&fs!==1)r.setProperty('--fs',String(fs));
+  const bg=HEXRE.test(t.bg||'')?t.bg:null,tx=HEXRE.test(t.text||'')?t.text:null,ac=HEXRE.test(t.accent||'')?t.accent:null;
+  if(bg)r.setProperty('--bg',bg);
+  if(tx)r.setProperty('--text',tx);
+  if(ac){r.setProperty('--accent',ac);r.setProperty('--accent-text',contrast(ac,'#000000')>contrast(ac,'#ffffff')?'#111111':'#ffffff');}
+  const B=bg||cssVar('--bg'),T=tx||cssVar('--text');
+  if(HEXRE.test(B)&&HEXRE.test(T)&&(bg||tx)){
+    if(bg)r.setProperty('--card',lum(bg)>.5?mix(bg,'#ffffff',.6):mix(bg,'#ffffff',.07));
+    r.setProperty('--muted',mix(T,B,.4));
+    r.setProperty('--line',mix(B,T,.15));
+  }
+  if(bg)r.setProperty('color-scheme',lum(bg)>.5?'light':'dark');
+  document.querySelectorAll('meta[name=theme-color]').forEach(m=>{if(m.dataset.o===undefined)m.dataset.o=m.getAttribute('content');m.setAttribute('content',bg||m.dataset.o);});
+  const w=document.getElementById('thWarn');
+  if(w){const B2=cssVar('--bg'),T2=cssVar('--text');w.textContent=(HEXRE.test(B2)&&HEXRE.test(T2)&&contrast(B2,T2)<4.5)?'Low contrast between the font and background colours – text may be hard to read.':'';}
+}
 
 /* ---------- ui state ---------- */
 const ui={tab:'workouts',past:null,editWorkout:null,histMode:'sessions',chartEx:null,chartSel:null,reps:0,repsKey:'',summary:null,exf:null,edit:null,confirmFn:null,viewKey:''};
@@ -197,7 +229,7 @@ function workoutsView(){
   S.workouts.forEach((w,i)=>{
     const names=w.items.map(it=>S.exercises[it.exId]&&S.exercises[it.exId].name).filter(Boolean);
     const ld=lastDone(w.id);
-    h+='<div class="card'+(i===0&&S.workouts.length>1?' next':'')+'"><div class="row"><b style="font-size:18px" class="grow">'+esc(w.name)+'</b>'+(i===0&&S.workouts.length>1?'<span class="badge" style="color:var(--accent);border-color:var(--accent)">Up next</span>':'')+'</div><div class="muted sm">'+(names.length?esc(names.join(' · ')):'No exercises yet')+'</div><div class="muted sm">'+(ld?'Last done: '+dFmt(ld):'Not done yet')+'</div>'+
+    h+='<div class="card'+(i===0&&S.workouts.length>1?' next':'')+'"><div class="row"><b style="font-size:calc(18px*var(--fs))" class="grow">'+esc(w.name)+'</b>'+(i===0&&S.workouts.length>1?'<span class="badge" style="color:var(--accent);border-color:var(--accent)">Up next</span>':'')+'</div><div class="muted sm">'+(names.length?esc(names.join(' · ')):'No exercises yet')+'</div><div class="muted sm">'+(ld?'Last done: '+dFmt(ld):'Not done yet')+'</div>'+
     '<div class="row mt"><button class="btn primary grow" data-act="start" data-id="'+w.id+'">Start workout</button><button class="btn sm" data-act="editW" data-id="'+w.id+'">Edit</button></div>'+
     '<div class="row mt"><button class="btn sm icon" data-act="wUp" data-i="'+i+'" aria-label="Move up">▲</button><button class="btn sm icon" data-act="wDown" data-i="'+i+'" aria-label="Move down">▼</button></div></div>';
   });
@@ -217,7 +249,7 @@ function workoutEditor(){
     '<button class="btn sm icon" data-act="iUp" data-i="'+i+'" aria-label="Move up">▲</button><button class="btn sm icon" data-act="iDown" data-i="'+i+'" aria-label="Move down">▼</button><button class="btn sm icon danger" data-act="iDel" data-i="'+i+'" aria-label="Remove">✕</button></div></div>';
   });
   h+='<button class="btn block" data-act="addEx">+ Add exercise</button>';
-  h+='<div class="muted sm center mt">Changes are saved automatically as you go.</div><button class="btn primary block huge mt" data-act="finishW">✓ Finish and save workout</button>';
+  h+='<div class="muted sm center mt">Changes are saved automatically as you go.</div>';
   h+='<button class="btn danger block mt" data-act="delW">Delete workout</button></main>';
   return h;
 }
@@ -314,7 +346,7 @@ function pastView(){
   const p=ui.past,w=S.workouts.find(x=>x.id===p.wid);
   if(!w){ui.past=null;return historyView();}
   let h='<header class="top"><button class="btn sm" data-act="pastCancel">‹ Back</button><h1>Log past workout</h1></header><main>';
-  h+='<div class="card"><b style="font-size:18px">'+esc(w.name)+'</b><label class="lbl" for="pDate">Date of workout</label><input id="pDate" type="date" value="'+esc(p.date)+'" max="'+todayISO()+'"></div>';
+  h+='<div class="card"><b style="font-size:calc(18px*var(--fs))">'+esc(w.name)+'</b><label class="lbl" for="pDate">Date of workout</label><input id="pDate" type="date" value="'+esc(p.date)+'" max="'+todayISO()+'"></div>';
   h+='<div class="muted sm">Enter the weight and the reps you did for each set. Leave an exercise’s reps empty if you didn’t do it. Tip: log your oldest workout first.</div>';
   w.items.forEach((it,i)=>{
     const ex=S.exercises[it.exId];if(!ex)return;
@@ -384,8 +416,22 @@ function chartsHtml(){
   h+='<div class="card"><b>'+dFmt(p.t)+'</b><div>'+(wtd?fmt(e.weight)+' kg':'Target '+range(e.repMin,e.repMax)+' reps')+'</div><div>'+e.sets.map((r,j)=>'<span class="chip" style="min-height:36px">'+r+'</span>').join('')+'</div>'+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'<div class="muted sm mt">Tap the chart to see another session.</div></div>';
   return h;
 }
+function themeHtml(){
+  const t=th(),fs=+t.fs||1;
+  let h='<div class="card"><h3 style="margin-top:0">Appearance</h3>';
+  h+='<label class="lbl" style="margin-top:0">Text size</label><div class="seg">'+SIZES.map(z=>'<button class="btn '+(Math.abs(fs-z[1])<.01?'on':'')+'" style="padding:0 4px" data-act="themeFs" data-v="'+z[1]+'">'+z[0]+'</button>').join('')+'</div>';
+  h+='<label class="lbl">Quick themes</label><div>'+PRESETS.map((p,i)=>'<button class="chip" data-act="themePreset" data-i="'+i+'">'+p[0]+'</button>').join('')+'</div>';
+  [['bg','Background colour','--bg'],['text','Font colour','--text'],['accent','Button colour','--accent']].forEach(c=>{
+    const v=HEXRE.test(t[c[0]]||'')?t[c[0]]:(HEXRE.test(cssVar(c[2]))?cssVar(c[2]):'#000000');
+    h+='<div class="row mt"><label class="grow" for="th_'+c[0]+'">'+c[1]+'</label><input type="color" id="th_'+c[0]+'" value="'+v+'" style="width:72px;min-height:48px;padding:4px"></div>';
+  });
+  h+='<div id="thWarn" class="sm mt" style="color:var(--danger)"></div>';
+  h+='<button class="btn block mt" data-act="themeReset">Reset appearance to default</button></div>';
+  return h;
+}
 function settingsView(){
   let h='<header class="top"><h1>Settings</h1></header><main>'+warn();
+  h+=themeHtml();
   h+='<div class="card"><h3 style="margin-top:0">Backup</h3><div class="muted sm">'+backupInfo()+'</div><div class="muted sm">Saves all exercises, workouts and history to a file you can keep.</div>'+
      '<button class="btn primary block mt" data-act="backup">Back up to file</button><button class="btn block mt" data-act="restore">Restore from file…</button></div>';
   if(deferredInstall)h+='<div class="card"><button class="btn primary block" data-act="install">Install app</button></div>';
@@ -638,6 +684,11 @@ act.delSession=d=>{
   },true);
 };
 
+// appearance
+act.themeFs=d=>{th().fs=+d.v;applyTheme();save();render();};
+act.themePreset=d=>{const p=PRESETS[+d.i][1],t=th();t.bg=p?p.bg:null;t.text=p?p.text:null;t.accent=p?p.accent:null;applyTheme();save();render();};
+act.themeReset=()=>{S.theme={fs:1,bg:null,text:null,accent:null};applyTheme();save();render();toast('Appearance reset');};
+
 // backup / restore / misc
 act.backup=()=>{
   S.lastBackup=Date.now();save();
@@ -656,14 +707,14 @@ $('#restoreFile').addEventListener('change',ev=>{
     let d;try{const j=JSON.parse(rd.result);d=j&&j.data?j.data:j;
       if(!d||typeof d.exercises!=='object'||!Array.isArray(d.workouts)||!Array.isArray(d.sessions))throw new Error('bad');}
     catch(e){toast('That file is not a valid backup');return;}
-    const doIt=()=>{S=Object.assign(blank(),d,{active:null});ui.editWorkout=null;ui.chartEx=null;save();render();toast('Backup restored');};
+    const doIt=()=>{S=Object.assign(blank(),d,{active:null});ui.editWorkout=null;ui.chartEx=null;applyTheme();save();render();toast('Backup restored');};
     const hasData=S.sessions.length||S.workouts.length||Object.keys(S.exercises).length;
     if(hasData)confirmDlg('Restoring will <b>replace everything</b> currently in the app ('+S.workouts.length+' workouts, '+S.sessions.length+' sessions) with the backup ('+d.workouts.length+' workouts, '+d.sessions.length+' sessions). Continue?','Replace data',doIt,true);
     else doIt();
   };
   rd.readAsText(f);
 });
-act.erase=()=>confirmDlg('Erase <b>all</b> exercises, workouts and history from this phone? Back up first if you might want it again.','Erase everything',()=>{S=blank();ui.editWorkout=null;save();render();toast('All data erased');},true);
+act.erase=()=>confirmDlg('Erase <b>all</b> exercises, workouts and history from this phone? Back up first if you might want it again.','Erase everything',()=>{S=blank();ui.editWorkout=null;applyTheme();save();render();toast('All data erased');},true);
 act.install=()=>{if(deferredInstall){deferredInstall.prompt();deferredInstall=null;render();}};
 
 /* ---------- events ---------- */
@@ -675,6 +726,7 @@ document.addEventListener('click',ev=>{
 document.addEventListener('input',ev=>{
   if(ev.target.id==='repsIn'){ui.reps=parseInt(ev.target.value,10)||0;}
   else if(ev.target.id==='note'&&S.active){S.active.entries[S.active.idx].note=ev.target.value;save();}
+  else if(ev.target.id&&ev.target.id.indexOf('th_')===0){th()[ev.target.id.slice(3)]=ev.target.value;applyTheme();save();}
 });
 document.addEventListener('change',ev=>{
   if(ev.target.id==='wName'){const w=S.workouts.find(x=>x.id===ui.editWorkout);if(w){w.name=ev.target.value.trim()||w.name;ev.target.value=w.name;save();}}
@@ -700,6 +752,7 @@ setInterval(tick,250);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){requestWake();tick();}});
 
 /* ---------- start ---------- */
+applyTheme();
 render();
 if(S.active)requestWake();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
