@@ -186,6 +186,11 @@ function lastNote(exId){
   for(const s of S.sessions)for(const e of s.entries)if(e.exId===exId&&e.note&&e.note.trim()&&(!best||s.start>best.t))best={t:s.start,note:e.note.trim()};
   return best;
 }
+function extraHtml(e){
+  if(!e.extra)return '';
+  const p=[];for(let j=0;j<e.sets.length;j++)if(e.extra[j]>0)p.push('after set '+(j+1)+' +'+e.extra[j]+'s');
+  return p.length?'<div class="muted sm">⏱ Extra rest: '+p.join(' · ')+'</div>':'';
+}
 function applyProgression(ex,e){
   const top=e.sets.every(r=>r>=e.repMax),low=e.sets.some(r=>r<e.repMin);
   if(e.type==='weighted'){
@@ -268,7 +273,7 @@ function timerCard(A){
   const rem=Math.max(0,Math.ceil((A.restEnd-Date.now())/1000));
   const pct=Math.min(100,Math.max(0,100*(A.restEnd-Date.now())/(A.restTotal*1000)));
   return '<div class="card" id="timerCard"><div class="muted center">Rest</div><div class="timer" id="rt">'+clock(rem)+'</div><div class="bar"><i id="rb" style="width:'+pct+'%"></i></div>'+
-  '<div class="row"><button class="btn grow" data-act="skipRest">Skip</button><button class="btn grow" data-act="addTime">+30s</button><button class="btn grow" data-act="stopRest">Stop</button></div></div>';
+  '<div class="row"><button class="btn grow" data-act="skipRest">Skip</button><button class="btn grow" data-act="addTime" data-s="15">+15s</button><button class="btn grow" data-act="addTime" data-s="30">+30s</button></div></div>';
 }
 function runView(){
   const A=S.active,e=A.entries[A.idx],n=A.entries.length;
@@ -293,6 +298,7 @@ function runView(){
     h+='<button class="btn primary block huge" data-act="logSet">Log set</button>';
   }else{
     h+=timerCard(A);
+    if(A.idx<n-1){const nx=A.entries[A.idx+1];h+='<div class="card note center"><div class="muted sm">Get ready: next exercise</div><b style="font-size:20px">'+esc(nx.name)+'</b><div class="target" style="font-size:34px">'+(nx.type==='weighted'?fmt(nx.weight)+'<small> kg</small>':range(nx.repMin,nx.repMax)+'<small> reps</small>')+'</div><div class="muted sm">'+nx.nSets+' sets · target '+range(nx.repMin,nx.repMax)+' reps</div></div>';}
     h+='<div class="card"><label class="lbl" for="note" style="margin-top:0">Notes for this exercise (optional)</label><textarea id="note" placeholder="e.g. felt easy, try more next time">'+esc(e.note)+'</textarea></div>';
     h+='<button class="btn primary block huge" data-act="nextEx">'+(A.idx>=n-1?'Finish workout':'Next exercise')+'</button>';
   }
@@ -304,7 +310,7 @@ function runView(){
   if(logged.length){
     h+='<h3 class="mt">Logged so far <span class="muted sm">(tap a set to fix reps)</span></h3><div class="card">';
     logged.forEach(o=>{h+='<div class="ent" style="'+(o===logged[0]?'border:0;margin:0;padding:0':'')+'"><b>'+esc(o.x.name)+'</b>'+(o.x.type==='weighted'?' <span class="muted sm">'+fmt(o.x.weight)+' kg</span>':'')+'<div>'+
-      o.x.sets.map((r,j)=>'<button class="chip" data-act="editSet" data-e="'+o.i+'" data-s="'+j+'">'+r+'</button>').join('')+'</div></div>';});
+      o.x.sets.map((r,j)=>'<button class="chip" data-act="editSet" data-e="'+o.i+'" data-s="'+j+'">'+r+'</button>').join('')+'</div>'+extraHtml(o.x)+'</div>';});
     h+='</div>';
   }
   return h+'</main>';
@@ -336,7 +342,7 @@ function sessionsHtml(){
       (s.manual?'<div class="muted sm">Added manually</div>':'<div class="muted sm">'+Math.max(1,Math.round((s.end-s.start)/60000))+' min</div>');
     s.entries.forEach((e,i)=>{
       h+='<div class="ent"><div class="row wrap"><b>'+esc(e.name)+'</b><span class="muted sm">'+(e.type==='weighted'?fmt(e.weight)+' kg':'target '+range(e.repMin,e.repMax)+' reps')+'</span>'+(e.complete?'':'<span class="badge warn">incomplete</span>')+'</div><div>'+
-        e.sets.map((r,j)=>'<button class="chip" data-act="editHSet" data-s="'+s.id+'" data-e="'+i+'" data-j="'+j+'">'+r+'</button>').join('')+'</div>'+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'</div>';
+        e.sets.map((r,j)=>'<button class="chip" data-act="editHSet" data-s="'+s.id+'" data-e="'+i+'" data-j="'+j+'">'+r+'</button>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'</div>';
     });
     h+='<button class="btn sm danger mt" data-act="delSession" data-s="'+s.id+'">Delete session</button></div>';
   });
@@ -413,7 +419,7 @@ function chartsHtml(){
   let h='<label class="lbl" for="chartEx">Exercise</label><select id="chartEx">'+list.map(x=>'<option value="'+x.id+'"'+(x.id===ui.chartEx?' selected':'')+'>'+esc(x.label)+'</option>').join('')+'</select>';
   h+='<div class="card mt">'+chartSvg(pts,sel)+'<div class="sm mt"><span class="dot" style="background:var(--accent)"></span>'+(wtd?'Weight (kg) – left axis':'Avg reps per set – left axis')+'<br><span class="dot" style="background:var(--accent2)"></span>'+(wtd?'Avg reps per set – right axis':'Top of target range – right axis')+'</div>'+(pts.length<2?'<div class="muted sm mt">Log this exercise a few more times to see a trend line.</div>':'')+'</div>';
   const p=pts[sel],e=p.e;
-  h+='<div class="card"><b>'+dFmt(p.t)+'</b><div>'+(wtd?fmt(e.weight)+' kg':'Target '+range(e.repMin,e.repMax)+' reps')+'</div><div>'+e.sets.map((r,j)=>'<span class="chip" style="min-height:36px">'+r+'</span>').join('')+'</div>'+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'<div class="muted sm mt">Tap the chart to see another session.</div></div>';
+  h+='<div class="card"><b>'+dFmt(p.t)+'</b><div>'+(wtd?fmt(e.weight)+' kg':'Target '+range(e.repMin,e.repMax)+' reps')+'</div><div>'+e.sets.map((r,j)=>'<span class="chip" style="min-height:36px">'+r+'</span>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'<div class="muted sm mt">Tap the chart to see another session.</div></div>';
   return h;
 }
 function themeHtml(){
@@ -578,8 +584,15 @@ act.logSet=()=>{
   startRest(e.rest);save();render();
 };
 act.skipRest=()=>{const A=S.active;A.restEnd=null;if(A.phase==='rest')A.phase='set';save();render();};
-act.stopRest=()=>{const A=S.active;A.restEnd=null;save();render();};
-act.addTime=()=>{const A=S.active;if(A.restEnd){A.restEnd+=30000;A.restTotal+=30;save();tick();}};
+act.addTime=d=>{
+  const A=S.active,sec=+d.s||30;
+  if(A.restEnd){
+    A.restEnd+=sec*1000;A.restTotal+=sec;
+    const e=A.entries[A.idx],j=e.sets.length-1;
+    if(j>=0){e.extra=e.extra||[];e.extra[j]=(e.extra[j]||0)+sec;}
+    save();render();
+  }
+};
 act.nextSet=()=>{S.active.phase='set';save();render();};
 function advance(){
   const A=S.active;A.restEnd=null;
