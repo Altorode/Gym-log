@@ -177,10 +177,16 @@ function confirmDlg(msg,okLabel,fn,danger){
 /* ---------- domain helpers ---------- */
 function exSummary(ex){
   if(ex.type==='weighted')return ex.sets+'×'+range(ex.repMin,ex.repMax)+' · '+fmt(ex.weight)+' kg · +'+fmt(ex.inc)+' · rest '+ex.rest+'s';
+  if(ex.timed)return ex.sets+'× hold '+range(ex.repMin,ex.repMax)+'s · step '+(ex.repStep||1)+'s · rest '+ex.rest+'s';
   return ex.sets+'×'+range(ex.repMin,ex.repMax)+' reps · step '+(ex.repStep||1)+' · rest '+ex.rest+'s';
 }
 function workoutsUsing(exId){return S.workouts.filter(w=>w.items.some(i=>i.exId===exId));}
-function makeEntry(ex){return {exId:ex.id,name:ex.name,type:ex.type,weight:ex.type==='weighted'?ex.weight:null,repMin:ex.repMin,repMax:ex.repMax,nSets:ex.sets,rest:ex.rest,sets:[],note:'',skipped:false,complete:false};}
+function rg(e){return range(e.repMin,e.repMax)+(e.timed?'s':'');}
+function holdView(A,e){
+  const el=(Date.now()-A.holdStart)/1000,T=e.repMax;
+  return el<T?{t:clock(Math.ceil(T-el)),l:'Hold – '+Math.floor(el)+'s done',over:false,pct:100*el/T}:{t:'+'+clock(Math.floor(el-T)),l:'Beyond the max! '+Math.floor(el)+'s total',over:true,pct:100};
+}
+function makeEntry(ex){return {exId:ex.id,name:ex.name,type:ex.type,timed:!!ex.timed,weight:ex.type==='weighted'?ex.weight:null,repMin:ex.repMin,repMax:ex.repMax,nSets:ex.sets,rest:ex.rest,sets:[],note:'',skipped:false,complete:false};}
 function lastNote(exId){
   let best=null;
   for(const s of S.sessions)for(const e of s.entries)if(e.exId===exId&&e.note&&e.note.trim()&&(!best||s.start>best.t))best={t:s.start,note:e.note.trim()};
@@ -202,7 +208,8 @@ function applyProgression(ex,e){
   const step=ex.repStep||1;let d=0;
   if(top)d=step;else if(low)d=-Math.min(step,e.repMin-1);
   ex.repMin=e.repMin+d;ex.repMax=e.repMax+d;
-  return {name:e.name,from:range(e.repMin,e.repMax)+' reps',to:range(ex.repMin,ex.repMax)+' reps',dir:d>0?1:d<0?-1:0};
+  const u=e.timed?'s':' reps';
+  return {name:e.name,from:range(e.repMin,e.repMax)+u,to:range(ex.repMin,ex.repMax)+u,dir:d>0?1:d<0?-1:0};
 }
 function todayISO(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
 function lastDone(wid){let b=null;S.sessions.forEach(s=>{if(s.workoutId===wid&&(b===null||s.start>b))b=s.start;});return b;}
@@ -264,7 +271,7 @@ function libraryView(){
   if(!list.length)h+='<div class="card muted">No exercises yet. Create exercises here, or while adding to a workout.</div>';
   list.forEach(ex=>{
     const n=workoutsUsing(ex.id).length;
-    h+='<div class="card"><button class="link block" data-act="editEx" data-id="'+ex.id+'"><b>'+esc(ex.name)+'</b><div class="muted sm">'+(ex.type==='weighted'?'Weighted':'Bodyweight')+' · '+esc(exSummary(ex))+'</div><div class="muted sm">Used in '+n+' workout'+(n===1?'':'s')+'</div></button></div>';
+    h+='<div class="card"><button class="link block" data-act="editEx" data-id="'+ex.id+'"><b>'+esc(ex.name)+'</b><div class="muted sm">'+(ex.type==='weighted'?'Weighted':ex.timed?'Timed hold':'Bodyweight')+' · '+esc(exSummary(ex))+'</div><div class="muted sm">Used in '+n+' workout'+(n===1?'':'s')+'</div></button></div>';
   });
   return h+'<button class="btn primary block mt" data-act="newEx">+ New exercise</button></main>';
 }
@@ -282,7 +289,7 @@ function runView(){
   h+='<div class="muted sm">Exercise '+(A.idx+1)+' of '+n+'</div>';
   h+='<div class="card center"><h2 class="exname">'+esc(e.name)+'</h2>'+
     (A.phase==='done'?'<div class="setlbl ok">All sets done ✓</div>':'<div class="setlbl">Set '+Math.min(e.sets.length+1,e.nSets)+' of '+e.nSets+'</div>')+
-    (e.type==='weighted'?'<div class="target">'+fmt(e.weight)+'<small> kg</small></div><div class="muted">Target '+rg+' reps</div>':'<div class="target">'+rg+'<small> reps</small></div><div class="muted">Bodyweight · target rep range</div>');
+    (e.type==='weighted'?'<div class="target">'+fmt(e.weight)+'<small> kg</small></div><div class="muted">Target '+rg+' reps</div>':'<div class="target">'+rg+'<small> '+(e.timed?'seconds':'reps')+'</small></div><div class="muted">'+(e.timed?'Timed hold · target time':'Bodyweight · target rep range')+'</div>');
   const ln=lastNote(e.exId);
   if(ln)h+='<div class="lastnote">Note from '+dFmt(ln.t,{day:'numeric',month:'short'})+': “'+esc(ln.note)+'”</div>';
   h+='</div>';
@@ -293,12 +300,17 @@ function runView(){
     if(!A.restEnd)h+='<button class="btn primary block huge" data-act="nextSet">Next set</button>';
     h+='<div class="muted center mt">Next: set '+(e.sets.length+1)+' of '+e.nSets+'</div>';
   }else if(A.phase==='set'){
+    if(e.timed){
+      if(!A.holdStart)h+='<div class="card center"><div class="muted sm">Hold for</div><div class="timer">'+clock(e.repMax)+'</div><div class="muted sm">Counts down from the max. Keep going past 0:00 if you can, or stop early if you fail.</div></div><button class="btn primary block huge" data-act="holdStart">Start hold</button>';
+      else{const v=holdView(A,e);h+='<div class="card center"><div class="muted" id="hl">'+v.l+'</div><div class="timer" id="ht" style="'+(v.over?'color:var(--ok)':'')+'">'+v.t+'</div><div class="bar"><i id="hb" style="width:'+v.pct+'%"></i></div></div><button class="btn primary block huge" data-act="holdStop">Stop &amp; log set</button><button class="btn block mt" data-act="holdCancel">Cancel hold (don’t log)</button>';}
+    }else{
     const key=A.idx+'-'+e.sets.length;if(ui.repsKey!==key){ui.repsKey=key;ui.reps=e.repMax;}
     h+='<div class="card"><div class="muted center sm">Reps achieved</div><div class="stepper mt"><button class="btn" data-act="repDelta" data-d="-1" aria-label="Fewer reps">−</button><input id="repsIn" type="number" inputmode="numeric" min="0" value="'+ui.reps+'"><button class="btn" data-act="repDelta" data-d="1" aria-label="More reps">+</button></div></div>';
     h+='<button class="btn primary block huge" data-act="logSet">Log set</button>';
+    }
   }else{
     h+=timerCard(A);
-    if(A.idx<n-1){const nx=A.entries[A.idx+1];h+='<div class="card note center"><div class="muted sm">Get ready: next exercise</div><b style="font-size:20px">'+esc(nx.name)+'</b><div class="target" style="font-size:34px">'+(nx.type==='weighted'?fmt(nx.weight)+'<small> kg</small>':range(nx.repMin,nx.repMax)+'<small> reps</small>')+'</div><div class="muted sm">'+nx.nSets+' sets · target '+range(nx.repMin,nx.repMax)+' reps</div></div>';}
+    if(A.idx<n-1){const nx=A.entries[A.idx+1];h+='<div class="card note center"><div class="muted sm">Get ready: next exercise</div><b style="font-size:20px">'+esc(nx.name)+'</b><div class="target" style="font-size:34px">'+(nx.type==='weighted'?fmt(nx.weight)+'<small> kg</small>':range(nx.repMin,nx.repMax)+'<small> '+(nx.timed?'seconds':'reps')+'</small>')+'</div><div class="muted sm">'+nx.nSets+' sets · target '+rg(nx)+(nx.timed?'':' reps')+'</div></div>';}
     h+='<div class="card"><label class="lbl" for="note" style="margin-top:0">Notes for this exercise (optional)</label><textarea id="note" placeholder="e.g. felt easy, try more next time">'+esc(e.note)+'</textarea></div>';
     h+='<button class="btn primary block huge" data-act="nextEx">'+(A.idx>=n-1?'Finish workout':'Next exercise')+'</button>';
   }
@@ -310,7 +322,7 @@ function runView(){
   if(logged.length){
     h+='<h3 class="mt">Logged so far <span class="muted sm">(tap a set to fix reps)</span></h3><div class="card">';
     logged.forEach(o=>{h+='<div class="ent" style="'+(o===logged[0]?'border:0;margin:0;padding:0':'')+'"><b>'+esc(o.x.name)+'</b>'+(o.x.type==='weighted'?' <span class="muted sm">'+fmt(o.x.weight)+' kg</span>':'')+'<div>'+
-      o.x.sets.map((r,j)=>'<button class="chip" data-act="editSet" data-e="'+o.i+'" data-s="'+j+'">'+r+'</button>').join('')+'</div>'+extraHtml(o.x)+'</div>';});
+      o.x.sets.map((r,j)=>'<button class="chip" data-act="editSet" data-e="'+o.i+'" data-s="'+j+'">'+r+(o.x.timed?'s':'')+'</button>').join('')+'</div>'+extraHtml(o.x)+'</div>';});
     h+='</div>';
   }
   return h+'</main>';
@@ -341,8 +353,8 @@ function sessionsHtml(){
     h+='<div class="card"><div class="row"><b class="grow">'+esc(s.name)+'</b><span class="muted sm">'+dFmt(s.start)+(s.manual?'':' · '+tFmt(s.start))+'</span></div>'+
       (s.manual?'<div class="muted sm">Added manually</div>':'<div class="muted sm">'+Math.max(1,Math.round((s.end-s.start)/60000))+' min</div>');
     s.entries.forEach((e,i)=>{
-      h+='<div class="ent"><div class="row wrap"><b>'+esc(e.name)+'</b><span class="muted sm">'+(e.type==='weighted'?fmt(e.weight)+' kg':'target '+range(e.repMin,e.repMax)+' reps')+'</span>'+(e.complete?'':'<span class="badge warn">incomplete</span>')+'</div><div>'+
-        e.sets.map((r,j)=>'<button class="chip" data-act="editHSet" data-s="'+s.id+'" data-e="'+i+'" data-j="'+j+'">'+r+'</button>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'</div>';
+      h+='<div class="ent"><div class="row wrap"><b>'+esc(e.name)+'</b><span class="muted sm">'+(e.type==='weighted'?fmt(e.weight)+' kg':'target '+rg(e)+(e.timed?'':' reps'))+'</span>'+(e.complete?'':'<span class="badge warn">incomplete</span>')+'</div><div>'+
+        e.sets.map((r,j)=>'<button class="chip" data-act="editHSet" data-s="'+s.id+'" data-e="'+i+'" data-j="'+j+'">'+r+(e.timed?'s':'')+'</button>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'</div>';
     });
     h+='<button class="btn sm danger mt" data-act="delSession" data-s="'+s.id+'">Delete session</button></div>';
   });
@@ -356,9 +368,9 @@ function pastView(){
   h+='<div class="muted sm">Enter the weight and the reps you did for each set. Leave an exercise’s reps empty if you didn’t do it. Tip: log your oldest workout first.</div>';
   w.items.forEach((it,i)=>{
     const ex=S.exercises[it.exId];if(!ex)return;
-    h+='<div class="card"><b>'+esc(ex.name)+'</b><div class="muted sm">Target '+range(ex.repMin,ex.repMax)+' reps</div>';
+    h+='<div class="card"><b>'+esc(ex.name)+'</b><div class="muted sm">Target '+rg(ex)+(ex.timed?' (hold time)':' reps')+'</div>';
     if(ex.type==='weighted')h+='<label class="lbl" for="pw_'+i+'">Weight (kg)</label><input id="pw_'+i+'" type="number" inputmode="decimal" step="any" value="'+fmt(ex.weight)+'">';
-    h+='<label class="lbl">Reps for each set</label><div class="row wrap" id="ps_'+i+'">';
+    h+='<label class="lbl">'+(ex.timed?'Seconds held in each set':'Reps for each set')+'</label><div class="row wrap" id="ps_'+i+'">';
     for(let j=0;j<ex.sets;j++)h+='<input id="pr_'+i+'_'+j+'" type="number" inputmode="numeric" min="0" placeholder="S'+(j+1)+'" style="width:72px;text-align:center">';
     h+='</div><button class="btn sm mt" data-act="pastAddSet" data-i="'+i+'">+ Add a set</button></div>';
   });
@@ -417,9 +429,9 @@ function chartsHtml(){
   let sel=ui.chartSel;if(sel==null||sel>=pts.length)sel=pts.length-1;
   const wtd=pts[0].e.type==='weighted';
   let h='<label class="lbl" for="chartEx">Exercise</label><select id="chartEx">'+list.map(x=>'<option value="'+x.id+'"'+(x.id===ui.chartEx?' selected':'')+'>'+esc(x.label)+'</option>').join('')+'</select>';
-  h+='<div class="card mt">'+chartSvg(pts,sel)+'<div class="sm mt"><span class="dot" style="background:var(--accent)"></span>'+(wtd?'Weight (kg) – left axis':'Avg reps per set – left axis')+'<br><span class="dot" style="background:var(--accent2)"></span>'+(wtd?'Avg reps per set – right axis':'Top of target range – right axis')+'</div>'+(pts.length<2?'<div class="muted sm mt">Log this exercise a few more times to see a trend line.</div>':'')+'</div>';
+  h+='<div class="card mt">'+chartSvg(pts,sel)+'<div class="sm mt"><span class="dot" style="background:var(--accent)"></span>'+(wtd?'Weight (kg) – left axis':'Avg '+(pts[0].e.timed?'seconds':'reps')+' per set – left axis')+'<br><span class="dot" style="background:var(--accent2)"></span>'+(wtd?'Avg reps per set – right axis':'Top of target range – right axis')+'</div>'+(pts.length<2?'<div class="muted sm mt">Log this exercise a few more times to see a trend line.</div>':'')+'</div>';
   const p=pts[sel],e=p.e;
-  h+='<div class="card"><b>'+dFmt(p.t)+'</b><div>'+(wtd?fmt(e.weight)+' kg':'Target '+range(e.repMin,e.repMax)+' reps')+'</div><div>'+e.sets.map((r,j)=>'<span class="chip" style="min-height:36px">'+r+'</span>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'<div class="muted sm mt">Tap the chart to see another session.</div></div>';
+  h+='<div class="card"><b>'+dFmt(p.t)+'</b><div>'+(wtd?fmt(e.weight)+' kg':'Target '+rg(e)+(e.timed?'':' reps'))+'</div><div>'+e.sets.map((r,j)=>'<span class="chip" style="min-height:36px">'+r+(e.timed?'s':'')+'</span>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'<div class="muted sm mt">Tap the chart to see another session.</div></div>';
   return h;
 }
 function themeHtml(){
@@ -461,8 +473,8 @@ function render(){
 /* ---------- exercise form ---------- */
 function openExForm(id,ctx){
   const ex=id?S.exercises[id]:null;
-  ui.exf={id:id,ctx:ctx||{},err:'',d:ex?{name:ex.name,type:ex.type,repMin:ex.repMin,repMax:ex.repMax,sets:ex.sets,rest:ex.rest,inc:ex.inc==null?2.5:ex.inc,weight:ex.weight==null?0:ex.weight,repStep:ex.repStep||1}
-    :{name:'',type:'weighted',repMin:8,repMax:12,sets:3,rest:90,inc:2.5,weight:0,repStep:1}};
+  ui.exf={id:id,ctx:ctx||{},err:'',d:ex?{name:ex.name,type:ex.type,repMin:ex.repMin,repMax:ex.repMax,sets:ex.sets,rest:ex.rest,inc:ex.inc==null?2.5:ex.inc,weight:ex.weight==null?0:ex.weight,repStep:ex.repStep||1,timed:!!ex.timed}
+    :{name:'',type:'weighted',repMin:8,repMax:12,sets:3,rest:90,inc:2.5,weight:0,repStep:1,timed:false}};
   openModal(exFormHtml());
 }
 function readExForm(){
@@ -474,15 +486,16 @@ function exFormHtml(){
   let h='<h3>'+(ex?'Edit exercise':'New exercise')+'</h3>';
   if(ex){const n=workoutsUsing(ex.id).length;if(!ex.workoutId&&n>1)h+='<div class="card note sm" style="margin:6px 0">Shared in '+n+' workouts – changes apply everywhere.</div>';else if(ex.workoutId)h+='<div class="muted sm">This workout’s own copy of the exercise.</div>';}
   h+='<label class="lbl" for="f_name">Name</label><input id="f_name" value="'+esc(d.name)+'" maxlength="40" placeholder="e.g. Back squat">';
-  if(ex)h+='<div class="muted sm mt">'+(wtd?'Weighted':'Bodyweight')+' exercise</div>';
+  if(ex)h+='<div class="muted sm mt">'+(wtd?'Weighted':d.timed?'Timed hold (bodyweight)':'Bodyweight')+' exercise</div>';
   else h+='<label class="lbl">Type</label><div class="seg"><button class="btn '+(wtd?'on':'')+'" data-act="exType" data-v="weighted">Weighted</button><button class="btn '+(!wtd?'on':'')+'" data-act="exType" data-v="bodyweight">Bodyweight</button></div>';
-  h+='<div class="row"><div class="grow"><label class="lbl" for="f_repMin">'+(!wtd&&ex?'Current min reps':'Min reps')+'</label><input id="f_repMin" type="number" inputmode="numeric" value="'+esc(d.repMin)+'"></div><div class="grow"><label class="lbl" for="f_repMax">'+(!wtd&&ex?'Current max reps':'Max reps')+'</label><input id="f_repMax" type="number" inputmode="numeric" value="'+esc(d.repMax)+'"></div></div>';
+  if(!ex&&!wtd)h+='<label class="row" style="margin:10px 0"><input type="checkbox" id="f_timed" data-act="exTimed"'+(d.timed?' checked':'')+'><span><b>Timed hold (e.g. plank)</b><div class="muted sm">The rep range becomes a time in seconds, with a countdown timer.</div></span></label>';
+  h+='<div class="row"><div class="grow"><label class="lbl" for="f_repMin">'+(d.timed?(ex?'Current min seconds':'Min seconds'):(!wtd&&ex?'Current min reps':'Min reps'))+'</label><input id="f_repMin" type="number" inputmode="numeric" value="'+esc(d.repMin)+'"></div><div class="grow"><label class="lbl" for="f_repMax">'+(d.timed?(ex?'Current max seconds':'Max seconds'):(!wtd&&ex?'Current max reps':'Max reps'))+'</label><input id="f_repMax" type="number" inputmode="numeric" value="'+esc(d.repMax)+'"></div></div>';
   h+='<div class="row"><div class="grow"><label class="lbl" for="f_sets">Sets</label><input id="f_sets" type="number" inputmode="numeric" value="'+esc(d.sets)+'"></div><div class="grow"><label class="lbl" for="f_rest">Rest (seconds)</label><input id="f_rest" type="number" inputmode="numeric" value="'+esc(d.rest)+'"></div></div>';
   if(wtd){
     h+='<label class="lbl" for="f_inc">Weight increment (kg)</label><input id="f_inc" type="number" inputmode="decimal" step="any" value="'+esc(d.inc)+'"><div class="mt">'+[1,1.25,2.5,5].map(v=>'<button class="chip" data-act="incChip" data-v="'+v+'">'+v+'</button>').join('')+'</div>';
     h+='<label class="lbl" for="f_weight">'+(ex?'Current target weight (kg)':'Starting weight (kg)')+'</label><input id="f_weight" type="number" inputmode="decimal" step="any" value="'+esc(d.weight)+'">';
   }else{
-    h+='<label class="lbl" for="f_repStep">Rep step (rep range moves by this when you progress)</label><input id="f_repStep" type="number" inputmode="numeric" value="'+esc(d.repStep)+'">';
+    h+='<label class="lbl" for="f_repStep">'+(d.timed?'Time step (seconds the range moves by when you progress)':'Rep step (rep range moves by this when you progress)')+'</label><input id="f_repStep" type="number" inputmode="numeric" value="'+esc(d.repStep)+'">';
   }
   if(f.err)h+='<div class="card err sm">'+esc(f.err)+'</div>';
   h+='<div class="row mt"><button class="btn grow" data-act="closeM">Cancel</button><button class="btn primary grow" data-act="exSave">Save</button></div>';
@@ -536,17 +549,23 @@ act.addNew=()=>{const w=S.workouts.find(x=>x.id===ui.editWorkout),shared=$('#sha
 act.newEx=()=>openExForm(null,{});
 act.editEx=d=>openExForm(d.id,{});
 act.exType=d=>{readExForm();ui.exf.d.type=d.v;openModal(exFormHtml());};
+act.exTimed=()=>{
+  readExForm();const d=ui.exf.d;d.timed=!d.timed;
+  if(d.timed&&d.repMin==8&&d.repMax==12&&d.repStep==1){d.repMin=30;d.repMax=60;d.repStep=5;d.rest=60;}
+  else if(!d.timed&&d.repMin==30&&d.repMax==60&&d.repStep==5){d.repMin=8;d.repMax=12;d.repStep=1;d.rest=90;}
+  openModal(exFormHtml());
+};
 act.incChip=d=>{readExForm();ui.exf.d.inc=d.v;openModal(exFormHtml());};
 act.exSave=()=>{
   readExForm();const f=ui.exf,d=f.d,name=String(d.name).trim();
   const repMin=num(d.repMin),repMax=num(d.repMax),sets=num(d.sets),rest=num(d.rest);
   const bad=m=>{f.err=m;openModal(exFormHtml());};
   if(!name)return bad('Please enter a name.');
-  if(!Number.isInteger(repMin)||repMin<1)return bad('Min reps must be a whole number, 1 or more.');
-  if(!Number.isInteger(repMax)||repMax<repMin)return bad('Max reps must be a whole number, at least the min.');
+  if(!Number.isInteger(repMin)||repMin<1)return bad('Min value must be a whole number, 1 or more.');
+  if(!Number.isInteger(repMax)||repMax<repMin)return bad('Max value must be a whole number, at least the min.');
   if(!Number.isInteger(sets)||sets<1||sets>20)return bad('Sets must be a whole number from 1 to 20.');
   if(!Number.isInteger(rest)||rest<0||rest>3600)return bad('Rest must be a whole number of seconds (0 or more).');
-  const o={name:name,type:d.type,repMin:repMin,repMax:repMax,sets:sets,rest:rest};
+  const o={name:name,type:d.type,timed:d.type==='bodyweight'&&!!d.timed,repMin:repMin,repMax:repMax,sets:sets,rest:rest};
   if(d.type==='weighted'){const inc=num(d.inc),weight=num(d.weight);
     if(!(inc>0))return bad('Weight increment must be more than 0.');
     if(!(weight>=0))return bad('Weight must be 0 or more.');
@@ -579,10 +598,17 @@ act.repDelta=d=>{ui.reps=Math.max(0,Math.min(999,(+ui.reps||0)+(+d.d)));const el
 act.logSet=()=>{
   const A=S.active,e=A.entries[A.idx];if(A.phase!=='set')return;
   const el=$('#repsIn');if(el)ui.reps=parseInt(el.value,10);
-  e.sets.push(Math.max(0,Math.min(999,Math.round(+ui.reps||0))));
+  commitSet(+ui.reps||0);
+};
+function commitSet(v){
+  const A=S.active,e=A.entries[A.idx];
+  e.sets.push(Math.max(0,Math.min(999,Math.round(v))));
   if(e.sets.length>=e.nSets){e.complete=true;A.phase='done';}else{A.phase=e.rest>0?'rest':'set';}
   startRest(e.rest);save();render();
-};
+}
+act.holdStart=()=>{unlockAudio();const A=S.active;A.holdStart=Date.now();A.holdAlerted=false;save();render();};
+act.holdStop=()=>{const A=S.active;if(A.phase!=='set'||!A.holdStart)return;const secs=Math.floor((Date.now()-A.holdStart)/1000);A.holdStart=null;commitSet(secs);};
+act.holdCancel=()=>{S.active.holdStart=null;save();render();};
 act.skipRest=()=>{const A=S.active;A.restEnd=null;if(A.phase==='rest')A.phase='set';save();render();};
 act.addTime=d=>{
   const A=S.active,sec=+d.s||30;
@@ -595,7 +621,7 @@ act.addTime=d=>{
 };
 act.nextSet=()=>{S.active.phase='set';save();render();};
 function advance(){
-  const A=S.active;A.restEnd=null;
+  const A=S.active;A.restEnd=null;A.holdStart=null;
   if(A.idx>=A.entries.length-1){finishWorkout();return;}
   A.idx++;A.phase='set';save();render();
 }
@@ -611,7 +637,7 @@ act.moveEx=d=>{
   const A=S.active;if(A.entries.length-1-A.idx<1){closeModal();return;}
   const e=A.entries.splice(A.idx,1)[0];
   if(d.w==='next')A.entries.splice(A.idx+1,0,e);else A.entries.push(e);
-  A.phase='set';A.restEnd=null;ui.repsKey='';
+  A.phase='set';A.restEnd=null;A.holdStart=null;ui.repsKey='';
   closeModal();save();render();toast(e.name+' moved to later');
 };
 act.finishEarly=()=>openModal('<h3>Finish workout?</h3><p class="muted">Sets you have logged are saved. Skipped or unfinished exercises will not change progression.</p><button class="btn primary block" data-act="finishNow">Save and finish</button><button class="btn danger block mt" data-act="discardW">Discard workout</button><button class="btn block mt" data-act="closeM">Keep going</button>');
@@ -677,7 +703,7 @@ act.pastSave=d=>{
     if(!sets.length)continue;
     let weight=null;
     if(ex.type==='weighted'){weight=num($('#pw_'+i).value);if(!(weight>=0)){toast('Check the weight for '+ex.name);return;}weight=r2(weight);}
-    entries.push({exId:ex.id,name:ex.name,type:ex.type,weight:weight,repMin:ex.repMin,repMax:ex.repMax,nSets:ex.sets,rest:ex.rest,sets:sets,note:'',skipped:false,complete:sets.length>=ex.sets});
+    entries.push({exId:ex.id,name:ex.name,type:ex.type,weight:weight,repMin:ex.repMin,repMax:ex.repMax,timed:!!ex.timed,nSets:ex.sets,rest:ex.rest,sets:sets,note:'',skipped:false,complete:sets.length>=ex.sets});
   }
   if(!entries.length){toast('Enter the reps for at least one exercise');return;}
   S.sessions.push({id:uid(),workoutId:w.id,name:w.name,start:start,end:start,manual:true,entries:entries});
@@ -749,7 +775,14 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredIns
 
 /* ---------- rest timer (based on the real clock) ---------- */
 function tick(){
-  const A=S.active;if(!A||!A.restEnd)return;
+  const A=S.active;if(!A)return;
+  if(A.holdStart&&A.phase==='set'){
+    const e=A.entries[A.idx],v=holdView(A,e),t=$('#ht');
+    if(t){t.textContent=v.t;t.style.color=v.over?'var(--ok)':'';}
+    const l=$('#hl');if(l)l.textContent=v.l;const b=$('#hb');if(b)b.style.width=v.pct+'%';
+    if(v.over&&!A.holdAlerted){A.holdAlerted=true;save();if((Date.now()-A.holdStart)/1000-e.repMax<8)alertUser();}
+  }
+  if(!A.restEnd)return;
   const rem=A.restEnd-Date.now();
   if(rem<=0){
     const late=-rem;A.restEnd=null;
