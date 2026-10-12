@@ -181,7 +181,7 @@ function exSummary(ex){
   return ex.sets+'×'+range(ex.repMin,ex.repMax)+' reps · step '+(ex.repStep||1)+' · rest '+ex.rest+'s';
 }
 function workoutsUsing(exId){return S.workouts.filter(w=>w.items.some(i=>i.exId===exId));}
-function rg(e){return range(e.repMin,e.repMax)+(e.timed?'s':'');}
+function rangeS(e){return range(e.repMin,e.repMax)+(e.timed?'s':'');}
 function holdView(A,e){
   const el=(Date.now()-A.holdStart)/1000,T=e.repMax;
   return el<T?{t:clock(Math.ceil(T-el)),l:'Hold – '+Math.floor(el)+'s done',over:false,pct:100*el/T}:{t:'+'+clock(Math.floor(el-T)),l:'Beyond the max! '+Math.floor(el)+'s total',over:true,pct:100};
@@ -310,7 +310,7 @@ function runView(){
     }
   }else{
     h+=timerCard(A);
-    if(A.idx<n-1){const nx=A.entries[A.idx+1];h+='<div class="card note center"><div class="muted sm">Get ready: next exercise</div><b style="font-size:20px">'+esc(nx.name)+'</b><div class="target" style="font-size:34px">'+(nx.type==='weighted'?fmt(nx.weight)+'<small> kg</small>':range(nx.repMin,nx.repMax)+'<small> '+(nx.timed?'seconds':'reps')+'</small>')+'</div><div class="muted sm">'+nx.nSets+' sets · target '+rg(nx)+(nx.timed?'':' reps')+'</div></div>';}
+    if(A.idx<n-1){const nx=A.entries[A.idx+1];h+='<div class="card note center"><div class="muted sm">Get ready: next exercise</div><b style="font-size:20px">'+esc(nx.name)+'</b><div class="target" style="font-size:34px">'+(nx.type==='weighted'?fmt(nx.weight)+'<small> kg</small>':range(nx.repMin,nx.repMax)+'<small> '+(nx.timed?'seconds':'reps')+'</small>')+'</div><div class="muted sm">'+nx.nSets+' sets · target '+rangeS(nx)+(nx.timed?'':' reps')+'</div></div>';}
     h+='<div class="card"><label class="lbl" for="note" style="margin-top:0">Notes for this exercise (optional)</label><textarea id="note" placeholder="e.g. felt easy, try more next time">'+esc(e.note)+'</textarea></div>';
     h+='<button class="btn primary block huge" data-act="nextEx">'+(A.idx>=n-1?'Finish workout':'Next exercise')+'</button>';
   }
@@ -353,7 +353,7 @@ function sessionsHtml(){
     h+='<div class="card"><div class="row"><b class="grow">'+esc(s.name)+'</b><span class="muted sm">'+dFmt(s.start)+(s.manual?'':' · '+tFmt(s.start))+'</span></div>'+
       (s.manual?'<div class="muted sm">Added manually</div>':'<div class="muted sm">'+Math.max(1,Math.round((s.end-s.start)/60000))+' min</div>');
     s.entries.forEach((e,i)=>{
-      h+='<div class="ent"><div class="row wrap"><b>'+esc(e.name)+'</b><span class="muted sm">'+(e.type==='weighted'?fmt(e.weight)+' kg':'target '+rg(e)+(e.timed?'':' reps'))+'</span>'+(e.complete?'':'<span class="badge warn">incomplete</span>')+'</div><div>'+
+      h+='<div class="ent"><div class="row wrap"><b>'+esc(e.name)+'</b><span class="muted sm">'+(e.type==='weighted'?fmt(e.weight)+' kg':'target '+rangeS(e)+(e.timed?'':' reps'))+'</span>'+(e.complete?'':'<span class="badge warn">incomplete</span>')+'</div><div>'+
         e.sets.map((r,j)=>'<button class="chip" data-act="editHSet" data-s="'+s.id+'" data-e="'+i+'" data-j="'+j+'">'+r+(e.timed?'s':'')+'</button>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'</div>';
     });
     h+='<button class="btn sm danger mt" data-act="delSession" data-s="'+s.id+'">Delete session</button></div>';
@@ -368,7 +368,7 @@ function pastView(){
   h+='<div class="muted sm">Enter the weight and the reps you did for each set. Leave an exercise’s reps empty if you didn’t do it. Tip: log your oldest workout first.</div>';
   w.items.forEach((it,i)=>{
     const ex=S.exercises[it.exId];if(!ex)return;
-    h+='<div class="card"><b>'+esc(ex.name)+'</b><div class="muted sm">Target '+rg(ex)+(ex.timed?' (hold time)':' reps')+'</div>';
+    h+='<div class="card"><b>'+esc(ex.name)+'</b><div class="muted sm">Target '+rangeS(ex)+(ex.timed?' (hold time)':' reps')+'</div>';
     if(ex.type==='weighted')h+='<label class="lbl" for="pw_'+i+'">Weight (kg)</label><input id="pw_'+i+'" type="number" inputmode="decimal" step="any" value="'+fmt(ex.weight)+'">';
     h+='<label class="lbl">'+(ex.timed?'Seconds held in each set':'Reps for each set')+'</label><div class="row wrap" id="ps_'+i+'">';
     for(let j=0;j<ex.sets;j++)h+='<input id="pr_'+i+'_'+j+'" type="number" inputmode="numeric" min="0" placeholder="S'+(j+1)+'" style="width:72px;text-align:center">';
@@ -431,7 +431,7 @@ function chartsHtml(){
   let h='<label class="lbl" for="chartEx">Exercise</label><select id="chartEx">'+list.map(x=>'<option value="'+x.id+'"'+(x.id===ui.chartEx?' selected':'')+'>'+esc(x.label)+'</option>').join('')+'</select>';
   h+='<div class="card mt">'+chartSvg(pts,sel)+'<div class="sm mt"><span class="dot" style="background:var(--accent)"></span>'+(wtd?'Weight (kg) – left axis':'Avg '+(pts[0].e.timed?'seconds':'reps')+' per set – left axis')+'<br><span class="dot" style="background:var(--accent2)"></span>'+(wtd?'Avg reps per set – right axis':'Top of target range – right axis')+'</div>'+(pts.length<2?'<div class="muted sm mt">Log this exercise a few more times to see a trend line.</div>':'')+'</div>';
   const p=pts[sel],e=p.e;
-  h+='<div class="card"><b>'+dFmt(p.t)+'</b><div>'+(wtd?fmt(e.weight)+' kg':'Target '+rg(e)+(e.timed?'':' reps'))+'</div><div>'+e.sets.map((r,j)=>'<span class="chip" style="min-height:36px">'+r+(e.timed?'s':'')+'</span>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'<div class="muted sm mt">Tap the chart to see another session.</div></div>';
+  h+='<div class="card"><b>'+dFmt(p.t)+'</b><div>'+(wtd?fmt(e.weight)+' kg':'Target '+rangeS(e)+(e.timed?'':' reps'))+'</div><div>'+e.sets.map((r,j)=>'<span class="chip" style="min-height:36px">'+r+(e.timed?'s':'')+'</span>').join('')+'</div>'+extraHtml(e)+(e.note&&e.note.trim()?'<div class="lastnote">'+esc(e.note)+'</div>':'')+'<div class="muted sm mt">Tap the chart to see another session.</div></div>';
   return h;
 }
 function themeHtml(){
@@ -459,6 +459,13 @@ function settingsView(){
 }
 
 function render(){
+  try{renderInner();}
+  catch(err){
+    console.error(err);
+    $('#app').innerHTML='<main><div class="card err"><b>Something went wrong showing this screen.</b><div class="muted sm mt">'+esc(err&&err.message)+'</div><div class="muted sm mt">Your data is safe. Back it up, then reload.</div><button class="btn block mt" data-act="backup">Back up data</button><button class="btn primary block mt" data-act="reloadApp">Reload</button></div></main>';
+  }
+}
+function renderInner(){
   let body,key;
   if(S.active){body=runView();key='run'+S.active.idx+S.active.phase;}
   else if(ui.summary){body=summaryView();key='sum';}
@@ -507,6 +514,7 @@ const num=v=>(v===''||v==null)?NaN:Number(v);
 /* ---------- actions ---------- */
 const act={};
 act.closeM=closeModal;
+act.reloadApp=()=>location.reload();
 act.confirmOk=()=>{const f=ui.confirmFn;closeModal();if(f)f();};
 act.tab=d=>{ui.tab=d.t;ui.editWorkout=null;ui.past=null;render();};
 act.hmode=d=>{ui.histMode=d.m;render();};
