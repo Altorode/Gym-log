@@ -397,10 +397,11 @@ function chartData(exId){
 function chartSvg(pts,sel){
   const W=360,H=240,L=44,R=44,T=14,B=38,pw=W-L-R,ph=H-T-B,n=pts.length;
   const X=i=>n===1?L+pw/2:L+pw*i/(n-1);
-  const dom=k=>{const v=pts.map(p=>p[k]);let mn=Math.min.apply(null,v),mx=Math.max.apply(null,v);if(mn===mx){mn-=1;mx+=1;}const pad=(mx-mn)*.12;let lo=mn-pad;if(mn>=0&&lo<0)lo=0;return [lo,mx+pad];};
+  // Whole-number axis: integer bounds with an integer step, so all 5 gridline labels are whole numbers
+  const dom=k=>{const v=pts.map(p=>p[k]);let mn=Math.min.apply(null,v),mx=Math.max.apply(null,v);if(mn===mx){mn-=1;mx+=1;}const pad=(mx-mn)*.08;let lo=Math.floor(mn-pad);if(mn>=0&&lo<0)lo=0;const hi=Math.ceil(mx+pad),step=Math.max(1,Math.ceil((hi-lo)/4));return [lo,lo+4*step];};
   const d1=dom('a'),d2=dom('b');
   const Y=(v,d)=>T+ph*(1-(v-d[0])/(d[1]-d[0]));
-  const f1=v=>String(Math.round(v*10)/10);
+  const f1=v=>String(Math.round(v));
   let s='<svg viewBox="0 0 '+W+' '+H+'" class="chart" role="img" aria-label="Progress chart">';
   for(let k=0;k<=4;k++){
     const y=T+ph*k/4;
